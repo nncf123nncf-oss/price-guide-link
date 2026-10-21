@@ -1,0 +1,770 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>料金の目安リンクメーカー</title>
+<meta name="description" content="メニューとオプションの金額を入れてリンクを1本作ると、お客さんが条件を選んで合計の目安を見られます。入力した内容はこの端末のブラウザで計算します。">
+<style>
+  :root {
+    --bg: #faf6f1; --surface: #ffffff; --ink: #231a14; --ink2: #43362d; --ink3: #655649;
+    --line: #ded2c6; --line-strong: #7d6b5c; --accent: #A8480F; --accent-ink: #ffffff; --accent-soft: #fbeadd;
+    --danger: #a8231b; --danger-soft: #fbe9e7; --notice: #f3efe8;
+    --font: "Hiragino Sans","Yu Gothic","BIZ UDPGothic","Noto Sans JP",system-ui,sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #17110d; --surface: #211913; --ink: #f6eee6; --ink2: #dccfc2; --ink3: #b8a897;
+      --line: #3d3128; --line-strong: #8f7d6c; --accent: #F2A56B; --accent-ink: #2a1405; --accent-soft: #3a2616;
+      --danger: #ff9a92; --danger-soft: #3a1f1c; --notice: #2a211a;
+    }
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 16px; line-height: 1.6; }
+  main { max-width: 1080px; margin: 0 auto; padding: 16px 16px 32px; }
+  h1 { font-size: 22px; line-height: 1.3; margin: 8px 0 8px; }
+  h2 { font-size: 18px; line-height: 1.4; margin: 0 0 10px; overflow-wrap: anywhere; }
+  h3 { font-size: 16px; line-height: 1.4; margin: 0 0 8px; }
+  p { margin: 0 0 10px; }
+  .lead { color: var(--ink2); }
+  .notes { margin: 0 0 14px; padding-left: 1.2em; color: var(--ink2); font-size: 15px; }
+  .notes li { margin-bottom: 2px; }
+  .small { font-size: 14px; color: var(--ink3); }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px; margin-bottom: 14px; min-width: 0; }
+  fieldset { border: 0; margin: 0 0 14px; padding: 0; min-width: 0; }
+  legend { font-weight: 700; padding: 0; margin: 0 0 8px; }
+  label.f { display: block; font-weight: 600; margin: 0 0 4px; }
+  .hint { font-weight: 400; color: var(--ink3); font-size: 14px; }
+  input[type=text], textarea {
+    display: block; width: 100%; min-width: 0; min-height: 44px; font: inherit; font-size: 16px; color: var(--ink); background: var(--surface);
+    border: 1px solid var(--line-strong); border-radius: 6px; padding: 8px 10px; margin: 0 0 10px; }
+  textarea { resize: vertical; }
+  input:focus-visible, textarea:focus-visible, button:focus-visible, summary:focus-visible, input[type=radio]:focus-visible, input[type=checkbox]:focus-visible {
+    outline: 3px solid var(--accent); outline-offset: 2px; }
+  button { font: inherit; font-size: 16px; min-height: 44px; min-width: 44px; padding: 8px 14px; border-radius: 6px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); cursor: pointer; }
+  button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 700; }
+  button.danger { color: var(--danger); }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  .btns { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 10px; }
+  .row-card { border: 1px solid var(--line); border-radius: 8px; padding: 12px; margin: 0 0 10px; background: var(--bg); min-width: 0; }
+  .row-card .rc-title { font-weight: 700; margin: 0 0 8px; }
+  .check { display: flex; align-items: center; gap: 10px; min-height: 44px; margin: 0 0 6px; cursor: pointer; min-width: 44px; }
+  .check input { width: 22px; height: 22px; flex: none; margin: 0; }
+  .radios { display: flex; flex-wrap: wrap; gap: 4px 18px; }
+  .errors { border: 2px solid var(--danger); background: var(--danger-soft); border-radius: 8px; padding: 10px 12px; margin: 0 0 12px; color: var(--ink); }
+  .errors ul { margin: 4px 0 0; padding-left: 1.2em; }
+  .okmsg { color: var(--ink2); font-weight: 600; }
+  .urlbox { font-size: 14px; word-break: break-all; overflow-wrap: anywhere; }
+  .len { font-weight: 700; }
+  .len.over { color: var(--danger); }
+  details > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; font-weight: 600; }
+  /* 閲覧画面 */
+  .view { min-width: 0; }
+  .notice { background: var(--notice); border: 1px solid var(--line-strong); border-left: 6px solid var(--accent); border-radius: 6px; padding: 10px 12px; margin: 0 0 14px; font-size: 14px; color: var(--ink2); }
+  .v-name { font-size: 20px; }
+  .vc { display: flex; align-items: center; gap: 10px; border: 1px solid var(--line-strong); border-radius: 8px; padding: 10px 12px; margin: 0 0 8px; background: var(--surface); cursor: pointer; min-height: 56px; min-width: 0; }
+  .vc input { width: 22px; height: 22px; flex: none; margin: 0; }
+  .vc .main { flex: 1 1 auto; min-width: 0; }
+  .vc .nm { font-weight: 700; overflow-wrap: anywhere; display: block; }
+  .vc .ds { font-size: 14px; color: var(--ink3); overflow-wrap: anywhere; display: block; }
+  .vc .pr { flex: none; font-weight: 700; white-space: nowrap; text-align: right; }
+  .vc.on { border: 2px solid var(--accent); background: var(--accent-soft); padding: 9px 11px; }
+  .opt { display: flex; align-items: center; gap: 10px; border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; margin: 0 0 8px; background: var(--surface); min-width: 0; }
+  .opt .main { flex: 1 1 auto; min-width: 0; }
+  .opt .nm { font-weight: 700; overflow-wrap: anywhere; display: block; }
+  .opt .ds { font-size: 14px; color: var(--ink3); display: block; overflow-wrap: anywhere; }
+  .stepper { display: flex; align-items: center; gap: 4px; flex: none; }
+  .stepper output { min-width: 28px; text-align: center; font-weight: 700; }
+  .stepper button { padding: 0; width: 44px; }
+  .opt label.sw { display: flex; align-items: center; min-height: 44px; min-width: 44px; justify-content: center; cursor: pointer; }
+  .opt label.sw input { width: 24px; height: 24px; margin: 0; }
+  .lines { list-style: none; margin: 0 0 10px; padding: 0; }
+  .lines li { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--line); }
+  .lines .l { min-width: 0; overflow-wrap: anywhere; }
+  .lines .a { flex: none; white-space: nowrap; }
+  .total { position: sticky; bottom: 0; background: var(--surface); border: 2px solid var(--accent); border-radius: 8px; padding: 10px 14px; margin: 14px 0; box-shadow: 0 -4px 12px rgba(0,0,0,.12); }
+  .total .t1 { font-size: 14px; color: var(--ink3); }
+  .total .t2 { font-size: 26px; font-weight: 800; line-height: 1.25; overflow-wrap: anywhere; }
+  .total .t3 { font-size: 14px; color: var(--ink2); overflow-wrap: anywhere; }
+  .pv .total { position: static; }
+  .total .t4 { font-size: 13px; color: var(--ink3); margin-top: 2px; }
+  html { scroll-padding-bottom: 180px; }
+  .linklike { background: none; border: 0; color: var(--accent); text-decoration: underline; padding: 8px 0; min-height: 44px; }
+  .mw-footer { box-sizing: border-box; width: 100%; max-width: 100%; margin: 24px 0 0; padding: 16px; background: #F7F7F8;
+    border: 1px solid #D8D8DC; border-radius: 6px; color: #3A3A3E; font-family: system-ui, sans-serif; font-size: 12px; line-height: 1.7; }
+  .mw-footer p { margin: 0 0 6px; } .mw-footer p:last-child { margin-bottom: 0; } .mw-footer a { color: #0B5AA6; display: inline-block; padding: 13px 0; }
+  @media (min-width: 880px) {
+    .layout { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: 20px; align-items: start; }
+    .sticky { position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow-y: auto; }
+    .viewpage { max-width: 560px; margin: 0 auto; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <div id="app"></div>
+  <footer class="mw-footer">
+    <p>みちAIワークス（MICHI AI WORKS）／代表 田中　泉</p>
+    <p>運営: <a href="https://michi-portfolio.vercel.app/" rel="noopener">みちAIワークス 公式サイト</a>（https://michi-portfolio.vercel.app/ ）／ お問い合わせ: <a href="mailto:nncf123nncf@gmail.com">nncf123nncf@gmail.com</a></p>
+    <p>入力した内容は、お使いの端末のブラウザで計算します。料金の目安リンクは、リンクを作った方が入力した内容を表示するだけで、当サイトは内容の確認や保証をしていません。アクセス解析（Cloudflare Web Analytics）で、ページの閲覧状況（閲覧数・参照元・ブラウザの種類など）を計測しています。</p>
+    <p>ログイン・会員登録・パスワードの入力を求めることはありません。</p>
+  </footer>
+</main>
+
+<script id="core">
+var PG = (function () {
+  var KEY = 'price-guide-link-v1';
+  var LIM = { name: 30, bname: 20, bdesc: 30, oname: 20, ounit: 6, rlabel: 12, note: 80, contact: 60, hitoko: 100 };
+  var MAXB = 6, MAXO = 8, MAXPRICE = 9999999, MAXQ = 20, URL_MAX = 2000, HASH_MAX = 4000;
+
+  function clean(s) { return String(s == null ? '' : s).replace(/[\u0000-\u001f\u007f-\u009f\u2028\u2029]+/g, ' ').replace(/\s+/g, ' ').trim(); }
+  function cpLen(s) { return Array.from(s).length; }
+  // 見えない文字・空白で分割された文字も、句点を使った表記も同じに見るため、正規化してから調べる
+  function hasLink(s) {
+    var n = String(s).normalize('NFKC').toLowerCase().replace(/[\s\u00ad\u200b-\u200f\u2060-\u2064\ufeff]/g, '').replace(/[。｡]/g, '.');
+    return /https?|:\/\/|www\.|tel:|mailto:|[a-z0-9-]+\.[a-z]{2,}/.test(n);
+  }
+  function toInt(v) {
+    var s = String(v == null ? '' : v).normalize('NFKC').replace(/[,\s円¥￥]/g, '');
+    if (!/^\d{1,8}$/.test(s)) return null;
+    var n = parseInt(s, 10);
+    return n <= MAXPRICE ? n : null;
+  }
+  function yen(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+
+  function blankBase() { return { name: '', desc: '', price: '', from: false }; }
+  function blankOpt() { return { name: '', price: '', unit: '', qty: false }; }
+  function emptyDraft() {
+    return { name: '', taxIncl: false, rushOn: false, rushLabel: '', rushPct: '20', note: '', contact: '', bases: [blankBase()], opts: [] };
+  }
+  function sampleDraft() {
+    return {
+      name: 'サンプル出張撮影', taxIncl: false, rushOn: true, rushLabel: '1週間以内の納品', rushPct: '20',
+      note: '料金は撮影内容で変わります', contact: 'ご相談はInstagramのDMへ',
+      bases: [
+        { name: 'ライト', desc: '撮影1時間・30枚納品', price: '15000', from: true },
+        { name: 'スタンダード', desc: '撮影2時間・60枚納品', price: '28000', from: true },
+        { name: 'フル', desc: '撮影半日・100枚納品', price: '50000', from: true }
+      ],
+      opts: [
+        { name: '追加データ', price: '3000', unit: '10枚', qty: true },
+        { name: 'ヘアメイク同行', price: '12000', unit: '', qty: false },
+        { name: '出張費（30km超）', price: '3000', unit: '', qty: false }
+      ]
+    };
+  }
+  // 保存された下書きを、型だけ整えて返す（検証は toConfig が行う）
+  function sanitizeDraft(o) {
+    var d = emptyDraft();
+    if (!o || typeof o !== 'object') return d;
+    function s(v, n) { return typeof v === 'string' ? v.slice(0, n) : ''; }
+    d.name = s(o.name, 100); d.taxIncl = o.taxIncl === true; d.rushOn = o.rushOn === true;
+    d.rushLabel = s(o.rushLabel, 100); d.rushPct = s(o.rushPct, 10) || '20'; d.note = s(o.note, 300); d.contact = s(o.contact, 300);
+    if (Array.isArray(o.bases)) {
+      d.bases = o.bases.slice(0, MAXB).map(function (b) { b = b || {}; return { name: s(b.name, 100), desc: s(b.desc, 100), price: s(b.price, 20), from: b.from === true }; });
+      if (!d.bases.length) d.bases = [blankBase()];
+    }
+    if (Array.isArray(o.opts)) {
+      d.opts = o.opts.slice(0, MAXO).map(function (b) { b = b || {}; return { name: s(b.name, 100), price: s(b.price, 20), unit: s(b.unit, 50), qty: b.qty === true }; });
+    }
+    return d;
+  }
+
+  // 入力（下書き）→ 設定。外れた点は日本語の文で errors に入れる
+  function toConfig(d) {
+    var errs = [];
+    function txt(v, max, label, req) {
+      var s = clean(v);
+      if (req && !s) errs.push(label + 'を入れてください');
+      if (cpLen(s) > max) errs.push(label + 'は' + max + '字までです');
+      if (hasLink(s)) errs.push(label + 'にリンクは入れられません');
+      return s;
+    }
+    function money(v, label) {
+      var n = toInt(v);
+      if (n === null) errs.push(label + 'の金額は、0〜9,999,999の整数で入れてください');
+      return n;
+    }
+    var cfg = { name: txt(d.name, LIM.name, '事業名', false), taxIncl: !!d.taxIncl, rush: null, note: '', contact: '', bases: [], opts: [] };
+    d.bases.forEach(function (b, i) {
+      if (!clean(b.name) && !clean(b.desc) && !clean(b.price)) return;
+      var no = '基本メニュー' + (i + 1);
+      var name = txt(b.name, LIM.bname, no + 'の名前', true);
+      var desc = txt(b.desc, LIM.bdesc, no + 'の説明', false);
+      var price = money(b.price, no);
+      cfg.bases.push({ name: name, desc: desc, price: price, from: !!b.from });
+    });
+    if (!cfg.bases.length) errs.push('基本メニューを1つ以上入れてください');
+    d.opts.forEach(function (o, i) {
+      if (!clean(o.name) && !clean(o.price) && !clean(o.unit)) return;
+      var no = 'オプション' + (i + 1);
+      var name = txt(o.name, LIM.oname, no + 'の名前', true);
+      var price = money(o.price, no);
+      var unit = txt(o.unit, LIM.ounit, no + 'の単位', false);
+      cfg.opts.push({ name: name, price: price, unit: unit, qty: !!o.qty });
+    });
+    if (d.rushOn) {
+      var label = txt(d.rushLabel, LIM.rlabel, '急ぎの割増の名前', true);
+      var ps = String(d.rushPct == null ? '' : d.rushPct).normalize('NFKC').replace(/[%％\s]/g, '');
+      var pct = /^\d{1,3}$/.test(ps) ? parseInt(ps, 10) : null;
+      if (pct === null || pct < 1 || pct > 100) { errs.push('急ぎの割増の割合は、1〜100の整数で入れてください'); pct = null; }
+      cfg.rush = { label: label, pct: pct };
+    }
+    cfg.note = txt(d.note, LIM.note, '補足', false);
+    cfg.contact = txt(d.contact, LIM.contact, '連絡方法の案内', false);
+    return { cfg: errs.length ? null : cfg, errors: errs };
+  }
+  function fromConfig(cfg) {
+    return {
+      name: cfg.name, taxIncl: cfg.taxIncl, rushOn: !!cfg.rush, rushLabel: cfg.rush ? cfg.rush.label : '', rushPct: cfg.rush ? String(cfg.rush.pct) : '20',
+      note: cfg.note, contact: cfg.contact,
+      bases: cfg.bases.map(function (b) { return { name: b.name, desc: b.desc, price: String(b.price), from: b.from }; }),
+      opts: cfg.opts.map(function (o) { return { name: o.name, price: String(o.price), unit: o.unit, qty: o.qty }; })
+    };
+  }
+
+  // 設定 ⇄ URLの # 以降
+  function toArray(c) {
+    return [1, c.name, c.taxIncl ? 1 : 0, c.rush ? [c.rush.label, c.rush.pct] : null, c.note, c.contact,
+      c.bases.map(function (b) { return [b.name, b.desc, b.price, b.from ? 1 : 0]; }),
+      c.opts.map(function (o) { return [o.name, o.price, o.unit, o.qty ? 1 : 0]; })];
+  }
+  function b64urlEncode(str) {
+    var bytes = new TextEncoder().encode(str), bin = '';
+    for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+  function b64urlDecode(s) {
+    var b = s.replace(/-/g, '+').replace(/_/g, '/');
+    while (b.length % 4) b += '=';
+    var bin = atob(b), bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+  }
+  function encode(cfg) { return 'v1=' + b64urlEncode(JSON.stringify(toArray(cfg))); }
+  function makeUrl(base, cfg) { return base + '#' + encode(cfg); }
+
+  function isStr(v, max, req) { return typeof v === 'string' && cpLen(v) <= max && (!req || v.length > 0) && v === clean(v) && !hasLink(v); }
+  function isInt(v, lo, hi) { return typeof v === 'number' && Number.isInteger(v) && v >= lo && v <= hi; }
+  function isBit(v) { return v === 0 || v === 1; }
+  function fromArray(a) {
+    if (!Array.isArray(a) || a.length !== 8 || a[0] !== 1) return null;
+    if (!isStr(a[1], LIM.name) || !isBit(a[2]) || !isStr(a[4], LIM.note) || !isStr(a[5], LIM.contact)) return null;
+    var rush = null;
+    if (a[3] !== null) {
+      if (!Array.isArray(a[3]) || a[3].length !== 2 || !isStr(a[3][0], LIM.rlabel, true) || !isInt(a[3][1], 1, 100)) return null;
+      rush = { label: a[3][0], pct: a[3][1] };
+    }
+    if (!Array.isArray(a[6]) || a[6].length < 1 || a[6].length > MAXB) return null;
+    if (!Array.isArray(a[7]) || a[7].length > MAXO) return null;
+    var bases = [], opts = [], i, r;
+    for (i = 0; i < a[6].length; i++) {
+      r = a[6][i];
+      if (!Array.isArray(r) || r.length !== 4 || !isStr(r[0], LIM.bname, true) || !isStr(r[1], LIM.bdesc) || !isInt(r[2], 0, MAXPRICE) || !isBit(r[3])) return null;
+      bases.push({ name: r[0], desc: r[1], price: r[2], from: r[3] === 1 });
+    }
+    for (i = 0; i < a[7].length; i++) {
+      r = a[7][i];
+      if (!Array.isArray(r) || r.length !== 4 || !isStr(r[0], LIM.oname, true) || !isInt(r[1], 0, MAXPRICE) || !isStr(r[2], LIM.ounit) || !isBit(r[3])) return null;
+      opts.push({ name: r[0], price: r[1], unit: r[2], qty: r[3] === 1 });
+    }
+    return { name: a[1], taxIncl: a[2] === 1, rush: rush, note: a[4], contact: a[5], bases: bases, opts: opts };
+  }
+  function decodeHash(h) {
+    try {
+      h = String(h == null ? '' : h).replace(/^#/, '');
+      if (h.length > HASH_MAX) return null;
+      var m = /^v1=([A-Za-z0-9_-]+)$/.exec(h);
+      if (!m) return null;
+      return fromArray(JSON.parse(b64urlDecode(m[1])));
+    } catch (e) { return null; }
+  }
+  // 貼られた文字列（URL全体でも # 以降だけでも）から設定を取り出す
+  function decodeAny(text) {
+    var s = String(text == null ? '' : text).trim(), i = s.indexOf('#');
+    return decodeHash(i >= 0 ? s.slice(i) : s);
+  }
+
+  // 計算（整数円・端数は切り捨て）
+  function newSel(cfg) { return { base: 0, qty: cfg.opts.map(function () { return 0; }), rush: false, hitoko: '' }; }
+  function fixSel(cfg, sel) {
+    if (!sel) sel = newSel(cfg);
+    if (!isInt(sel.base, 0, cfg.bases.length - 1)) sel.base = 0;
+    var q = [];
+    cfg.opts.forEach(function (o, i) {
+      var n = (sel.qty && sel.qty[i]) | 0;
+      n = Math.max(0, Math.min(MAXQ, n));
+      if (!o.qty && n > 1) n = 1;
+      q.push(n);
+    });
+    sel.qty = q; sel.rush = !!sel.rush && !!cfg.rush; sel.hitoko = String(sel.hitoko || '').slice(0, 200);
+    return sel;
+  }
+  function optLabel(o) { return o.name + (o.unit ? '（' + o.unit + '）' : ''); }
+  function calc(cfg, sel) {
+    sel = fixSel(cfg, sel);
+    var b = cfg.bases[sel.base], sub = b.price, lines = [{ label: b.name, amount: b.price }];
+    cfg.opts.forEach(function (o, i) {
+      var q = sel.qty[i];
+      if (q > 0) { var amt = o.price * q; sub += amt; lines.push({ label: optLabel(o) + (q > 1 ? ' × ' + q : ''), amount: amt }); }
+    });
+    var extra = 0;
+    if (cfg.rush && sel.rush) {
+      var x = sub * cfg.rush.pct; extra = (x - (x % 100)) / 100;
+      lines.push({ label: cfg.rush.label + '（+' + cfg.rush.pct + '%）', amount: extra });
+    }
+    var total = sub + extra;
+    return { sub: sub, extra: extra, total: total, taxed: cfg.taxIncl ? null : Math.floor(total * 11 / 10), from: !!b.from, lines: lines };
+  }
+  function totalParts(cfg, r) {
+    var tilde = r.from ? '〜' : '';
+    return {
+      main: yen(r.total) + '円' + tilde,
+      unit: cfg.taxIncl ? '（税込）' : '（税抜）',
+      sub: cfg.taxIncl ? '' : '税込の目安 ' + yen(r.taxed) + '円' + tilde
+    };
+  }
+  function totalLine(cfg, r) {
+    var p = totalParts(cfg, r);
+    return p.main + p.unit + (p.sub ? '／' + p.sub : '');
+  }
+  function buildMessage(cfg, sel) {
+    sel = fixSel(cfg, sel);
+    var r = calc(cfg, sel), out = ['【料金の目安を見て連絡しました】'];
+    if (cfg.name) out.push(cfg.name);
+    out.push('メニュー: ' + cfg.bases[sel.base].name);
+    var os = [];
+    cfg.opts.forEach(function (o, i) { if (sel.qty[i] > 0) os.push(optLabel(o) + (sel.qty[i] > 1 ? ' ×' + sel.qty[i] : '')); });
+    if (os.length) out.push('オプション: ' + os.join('、'));
+    if (sel.rush) out.push('急ぎ: ' + cfg.rush.label + '（+' + cfg.rush.pct + '%）');
+    out.push('目安: ' + totalLine(cfg, r));
+    var ht = clean(sel.hitoko);
+    if (ht) out.push('ひとこと: ' + ht.slice(0, LIM.hitoko));
+    out.push('※目安の表示を見ての相談です。正式な金額はお見積もりでお願いします');
+    return out.join('\n');
+  }
+  function canShareUrl(nav) { return !!nav && typeof nav.share === 'function'; }
+
+  return {
+    KEY: KEY, LIM: LIM, MAXB: MAXB, MAXO: MAXO, MAXQ: MAXQ, URL_MAX: URL_MAX, HASH_MAX: HASH_MAX,
+    clean: clean, hasLink: hasLink, toInt: toInt, yen: yen, cpLen: cpLen,
+    blankBase: blankBase, blankOpt: blankOpt, emptyDraft: emptyDraft, sampleDraft: sampleDraft, sanitizeDraft: sanitizeDraft,
+    toConfig: toConfig, fromConfig: fromConfig, encode: encode, makeUrl: makeUrl, decodeHash: decodeHash, decodeAny: decodeAny,
+    newSel: newSel, fixSel: fixSel, calc: calc, totalParts: totalParts, totalLine: totalLine, buildMessage: buildMessage, canShareUrl: canShareUrl, optLabel: optLabel
+  };
+})();
+if (typeof module !== 'undefined') module.exports = PG;
+</script>
+
+<script id="ui">
+(function () {
+  var app = document.getElementById('app');
+  var uid = 0;
+
+  function h(tag, a, kids) {
+    var e = document.createElement(tag);
+    if (a) Object.keys(a).forEach(function (k) {
+      var v = a[k];
+      if (v == null || v === false) return;
+      if (k === 'class') e.className = v;
+      else if (k === 'text') e.textContent = v;
+      else if (k.slice(0, 2) === 'on') e.addEventListener(k.slice(2), v);
+      else if (v === true) e.setAttribute(k, '');
+      else e.setAttribute(k, v);
+    });
+    (kids || []).forEach(function (c) { if (c != null) e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c); });
+    return e;
+  }
+  function baseUrl() { return location.href.split('#')[0].split('?')[0]; }
+
+  function copyText(text, done) {
+    function fallback() {
+      var ok = false;
+      try {
+        var ta = document.createElement('textarea');
+        ta.value = text; ta.setAttribute('readonly', '');
+        ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;font-size:16px';
+        document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0, text.length);
+        ok = document.execCommand('copy'); document.body.removeChild(ta);
+      } catch (e) { ok = false; }
+      done(ok);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      try { navigator.clipboard.writeText(text).then(function () { done(true); }, fallback); } catch (e) { fallback(); }
+    } else fallback();
+  }
+
+  /* ---------------- 見る画面（お客さん側・プレビュー兼用） ---------------- */
+  function renderView(root, cfg, st, preview) {
+    var id = ++uid;
+    PG.fixSel(cfg, st);
+    root.textContent = '';
+    var wrap = h('div', { class: 'view' + (preview ? ' pv' : '') });
+    wrap.appendChild(h('div', { class: 'notice', text: 'この画面の内容は、リンクを作った方が入力したものです。当サイトはリンクを作った方とは無関係で、内容の確認もしていません。お金の振込先や個人情報を入力する画面ではありません。' }));
+    if (cfg.name) wrap.appendChild(h('h2', { class: 'v-name', text: cfg.name }));
+    wrap.appendChild(h('p', { class: 'small', text: '条件を選ぶと、合計の目安が出ます。金額は' + (cfg.taxIncl ? '税込' : '税抜') + 'で表示しています（税込の目安は10%、端数は切り捨てです）。' }));
+
+    var totalBox = h('div', { class: 'total', role: 'status', 'aria-live': 'polite' });
+    var linesEl = h('ul', { class: 'lines' });
+    var cards = [];
+
+    var fsBase = h('fieldset', null, [h('legend', { text: 'メニューを選ぶ' })]);
+    cfg.bases.forEach(function (b, i) {
+      var inp = h('input', { type: 'radio', name: 'base-' + id });
+      inp.checked = st.base === i;
+      var lab = h('label', { class: 'vc' }, [inp,
+        h('span', { class: 'main' }, [h('span', { class: 'nm', text: b.name }), b.desc ? h('span', { class: 'ds', text: b.desc }) : null]),
+        h('span', { class: 'pr', text: PG.yen(b.price) + '円' + (b.from ? '〜' : '') })]);
+      inp.addEventListener('change', function () { st.base = i; update(); });
+      cards.push(lab); fsBase.appendChild(lab);
+    });
+    wrap.appendChild(fsBase);
+
+    var outs = [];
+    if (cfg.opts.length) {
+      var fsOpt = h('fieldset', null, [h('legend', { text: 'オプション（なくても大丈夫です）' })]);
+      cfg.opts.forEach(function (o, i) {
+        var ctl, upd;
+        if (o.qty) {
+          var out = h('output', { text: String(st.qty[i]) });
+          var minus = h('button', { type: 'button', 'aria-label': o.name + 'を減らす', text: '−' });
+          var plus = h('button', { type: 'button', 'aria-label': o.name + 'を増やす', text: '＋' });
+          minus.addEventListener('click', function () { st.qty[i] = Math.max(0, st.qty[i] - 1); update(); });
+          plus.addEventListener('click', function () { st.qty[i] = Math.min(PG.MAXQ, st.qty[i] + 1); update(); });
+          ctl = h('span', { class: 'stepper' }, [minus, out, plus]);
+          upd = function () { out.textContent = String(st.qty[i]); minus.disabled = st.qty[i] <= 0; plus.disabled = st.qty[i] >= PG.MAXQ; };
+        } else {
+          var cb = h('input', { type: 'checkbox', 'aria-label': o.name });
+          cb.checked = st.qty[i] > 0;
+          cb.addEventListener('change', function () { st.qty[i] = cb.checked ? 1 : 0; update(); });
+          ctl = h('label', { class: 'sw' }, [cb]);
+          upd = function () { cb.checked = st.qty[i] > 0; };
+        }
+        outs.push(upd);
+        fsOpt.appendChild(h('div', { class: 'opt' }, [
+          h('span', { class: 'main' }, [h('span', { class: 'nm', text: o.name }),
+            h('span', { class: 'ds', text: PG.yen(o.price) + '円' + (o.unit ? ' ／ ' + o.unit : '') + (o.qty ? '（数を選べます）' : '') })]),
+          ctl]));
+      });
+      wrap.appendChild(fsOpt);
+    }
+    var rushCb = null;
+    if (cfg.rush) {
+      rushCb = h('input', { type: 'checkbox' });
+      rushCb.checked = st.rush;
+      rushCb.addEventListener('change', function () { st.rush = rushCb.checked; update(); });
+      var rl = h('label', { class: 'vc' }, [rushCb,
+        h('span', { class: 'main' }, [h('span', { class: 'nm', text: cfg.rush.label }), h('span', { class: 'ds', text: '合計に +' + cfg.rush.pct + '% が加わります' })])]);
+      cards.push(rl);
+      wrap.appendChild(h('fieldset', null, [h('legend', { text: '急ぎのご希望' }), rl]));
+    }
+
+    wrap.appendChild(h('h3', { text: '内訳' }));
+    wrap.appendChild(linesEl);
+    if (cfg.note) wrap.appendChild(h('p', { text: cfg.note }));
+    if (cfg.contact) wrap.appendChild(h('p', { class: 'small', text: cfg.contact }));
+    wrap.appendChild(h('p', { class: 'small', text: '表示は目安です。正式な金額は、内容を確認したうえで事業者からお伝えします。' }));
+
+    // 相談文
+    var consult = h('div', { class: 'panel' });
+    consult.appendChild(h('h3', { text: 'この内容で相談する' }));
+    consult.appendChild(h('p', { class: 'small', text: 'このページから事業者へ送信されることはありません。選んだ内容を文にしてコピーするので、いつもの連絡手段（DM・LINE・メールなど）に貼ってください。' }));
+    var hi = h('input', { type: 'text', maxlength: PG.LIM.hitoko, autocomplete: 'off', id: 'hi-' + id });
+    hi.value = st.hitoko;
+    hi.addEventListener('input', function () { st.hitoko = hi.value; });
+    consult.appendChild(h('label', { class: 'f', for: 'hi-' + id }, ['ひとこと ', h('span', { class: 'hint', text: '（任意・100字まで。希望の時期など）' })]));
+    consult.appendChild(hi);
+    var msgBox = h('textarea', { readonly: true, rows: 9, 'aria-label': '相談文' }); msgBox.hidden = true;
+    var status = h('p', { class: 'okmsg', role: 'status' });
+    var go = h('button', { type: 'button', class: 'primary', text: 'この内容で相談する（文をコピー）' });
+    go.addEventListener('click', function () {
+      var text = PG.buildMessage(cfg, st);
+      msgBox.value = text; msgBox.hidden = false;
+      copyText(text, function (ok) {
+        if (ok) status.textContent = 'コピーしました。いつもの連絡手段に貼ってください。';
+        else { status.textContent = 'コピーできませんでした。下の文を長押しして、コピーしてください。'; msgBox.focus(); msgBox.select(); msgBox.setSelectionRange(0, text.length); }
+      });
+    });
+    consult.appendChild(h('div', { class: 'btns' }, [go]));
+    consult.appendChild(status); consult.appendChild(msgBox);
+    wrap.appendChild(consult);
+    wrap.appendChild(totalBox);
+
+    function update() {
+      PG.fixSel(cfg, st);
+      var r = PG.calc(cfg, st), p = PG.totalParts(cfg, r);
+      cards.forEach(function (c) { var i = c.querySelector('input'); c.classList.toggle('on', i.checked); });
+      cfg.bases.forEach(function (b, i) { var inp = cards[i].querySelector('input'); inp.checked = st.base === i; cards[i].classList.toggle('on', st.base === i); });
+      if (rushCb) { rushCb.checked = st.rush; }
+      cards.forEach(function (c) { c.classList.toggle('on', c.querySelector('input').checked); });
+      outs.forEach(function (f) { f(); });
+      linesEl.textContent = '';
+      r.lines.forEach(function (l) { linesEl.appendChild(h('li', null, [h('span', { class: 'l', text: l.label }), h('span', { class: 'a', text: PG.yen(l.amount) + '円' })])); });
+      totalBox.textContent = '';
+      totalBox.appendChild(h('div', { class: 't1', text: '合計の目安' }));
+      totalBox.appendChild(h('div', { class: 't2', text: p.main + p.unit }));
+      if (p.sub) totalBox.appendChild(h('div', { class: 't3', text: p.sub }));
+      totalBox.appendChild(h('div', { class: 't4', text: '表示は目安です。正式な金額は事業者が伝えます' }));
+    }
+    update();
+    root.appendChild(wrap);
+  }
+
+  /* ---------------- 作る画面（事業者側） ---------------- */
+  function loadDraft() {
+    try { var s = localStorage.getItem(PG.KEY); if (s) return PG.sanitizeDraft(JSON.parse(s)); } catch (e) { }
+    return PG.emptyDraft();
+  }
+  var storageOk = true;
+  function saveDraft(d) { try { localStorage.setItem(PG.KEY, JSON.stringify(d)); } catch (e) { storageOk = false; } }
+
+  function renderMake() {
+    document.title = '料金の目安リンクメーカー';
+    app.textContent = '';
+    var draft = loadDraft(), showErrors = false, pvSel = null, timer = null;
+
+    var head = [
+      h('h1', { text: '料金の目安リンクメーカー' }),
+      h('p', { class: 'lead', text: 'メニューとオプションの金額を入れて、リンクを1本作ります。お客さんがそのリンクで条件を選ぶと、合計の目安が出ます。' }),
+      h('ul', { class: 'notes' }, [
+        h('li', { text: '入力した内容は、この端末のブラウザで計算します。ページの閲覧状況（閲覧数など）は、アクセス解析で計測しています。' }),
+        h('li', { text: '作ったリンクは保存されません。作ったら、URLをコピーしてメモなどに控えてください。' }),
+        h('li', { text: '入力の途中の内容は、この端末のブラウザに自動で保存されます（「入力を空にする」で消せます）。共有のパソコンでは使わないでください。' }),
+        h('li', { text: 'お客さんが選んだ内容は、あなたには送られません。お客さんが文をコピーして、あなたに送ります。' })
+      ])
+    ];
+    head.forEach(function (e) { app.appendChild(e); });
+    if (!storageOk) app.appendChild(h('div', { class: 'errors', text: 'この端末では下書きを保存できません。ページを閉じると入力が消えます。' }));
+
+    var layout = h('div', { class: 'layout' });
+    var left = h('div'), right = h('div', { class: 'sticky' });
+    layout.appendChild(left); layout.appendChild(right);
+    app.appendChild(layout);
+
+    var errBox = h('div', { class: 'errors', role: 'alert' }); errBox.hidden = true;
+    var resultBox = h('div', { class: 'panel' }); resultBox.hidden = true;
+    var pvRoot = h('div');
+
+    function changed() {
+      saveDraft(draft);
+      resultBox.hidden = true;
+      if (showErrors) refreshErrors();
+      clearTimeout(timer); timer = setTimeout(renderPreview, 150);
+    }
+    function refreshErrors() {
+      var r = PG.toConfig(draft);
+      errBox.textContent = '';
+      if (r.errors.length) {
+        errBox.hidden = false;
+        errBox.appendChild(h('strong', { text: '次の点を直してください' }));
+        errBox.appendChild(h('ul', null, r.errors.slice(0, 8).map(function (m) { return h('li', { text: m }); })));
+      } else errBox.hidden = true;
+      return r;
+    }
+    function renderPreview() {
+      var r = PG.toConfig(draft);
+      pvRoot.textContent = '';
+      if (!r.cfg) {
+        pvRoot.appendChild(h('p', { class: 'small', text: '入力が整うと、ここにお客さんから見える画面が出ます。' + (r.errors.length ? '（いまの状態: ' + r.errors[0] + '）' : '') }));
+        return;
+      }
+      if (!pvSel) pvSel = PG.newSel(r.cfg);
+      var inner = h('div'); pvRoot.appendChild(inner);
+      renderView(inner, r.cfg, pvSel, true);
+    }
+
+    function textField(obj, key, label, max, hint, opts) {
+      var id = 'f' + (++uid);
+      var inp = h('input', { type: 'text', id: id, maxlength: max, autocomplete: 'off', inputmode: opts && opts.inputmode, placeholder: opts && opts.ph });
+      inp.value = obj[key];
+      inp.addEventListener('input', function () { obj[key] = inp.value; changed(); });
+      return h('div', null, [h('label', { class: 'f', for: id }, [label, hint ? h('span', { class: 'hint', text: ' ' + hint }) : null]), inp]);
+    }
+    function checkField(obj, key, label, onchange) {
+      var cb = h('input', { type: 'checkbox' });
+      cb.checked = !!obj[key];
+      cb.addEventListener('change', function () { obj[key] = cb.checked; if (onchange) onchange(); changed(); });
+      return h('label', { class: 'check' }, [cb, h('span', { text: label })]);
+    }
+
+    var form = h('div', { class: 'panel' });
+    left.appendChild(h('div', { class: 'btns' }, [
+      h('button', { type: 'button', text: 'サンプルを入れる', onclick: function () {
+        var d0 = draft, dirty = d0.bases.some(function (b) { return PG.clean(b.name) || PG.clean(b.price); });
+        if (dirty && !confirm('いまの入力を、サンプルに置き換えます。よろしいですか？')) return;
+        draft = PG.sampleDraft(); pvSel = null; buildForm(); changed();
+      } }),
+      h('button', { type: 'button', text: '入力を空にする', onclick: function () {
+        if (!confirm('入力をすべて消します。よろしいですか？')) return;
+        draft = PG.emptyDraft(); pvSel = null; showErrors = false; buildForm(); changed();
+      } })
+    ]));
+
+    var imp = h('details', { class: 'panel' });
+    var impTa = h('textarea', { rows: 3, 'aria-label': '以前作ったURL', placeholder: '以前作ったURLを貼ってください' });
+    var impMsg = h('p', { class: 'okmsg', role: 'status' });
+    imp.appendChild(h('summary', { text: '以前作ったリンクから読み込む' }));
+    imp.appendChild(impTa);
+    imp.appendChild(h('div', { class: 'btns' }, [h('button', { type: 'button', text: '読み込む', onclick: function () {
+      var cfg = PG.decodeAny(impTa.value);
+      if (!cfg) { impMsg.textContent = 'リンクが壊れているか、対応していない形式です。'; return; }
+      draft = PG.fromConfig(cfg); pvSel = null; buildForm(); changed(); impMsg.textContent = '読み込みました。';
+    } })]));
+    imp.appendChild(impMsg);
+    left.appendChild(imp);
+    left.appendChild(form);
+
+    function buildForm() {
+      form.textContent = '';
+      form.appendChild(textField(draft, 'name', '事業名', PG.LIM.name, '（任意・30字まで）'));
+      var tax = h('fieldset', null, [h('legend', { text: '入力する金額は' })]);
+      var rg = 'tax' + (++uid), r0 = h('input', { type: 'radio', name: rg }), r1 = h('input', { type: 'radio', name: rg });
+      r0.checked = !draft.taxIncl; r1.checked = draft.taxIncl;
+      r0.addEventListener('change', function () { draft.taxIncl = false; changed(); });
+      r1.addEventListener('change', function () { draft.taxIncl = true; changed(); });
+      tax.appendChild(h('div', { class: 'radios' }, [
+        h('label', { class: 'check' }, [r0, h('span', { text: '税抜' })]),
+        h('label', { class: 'check' }, [r1, h('span', { text: '税込' })])]));
+      tax.appendChild(h('p', { class: 'small', text: '税抜で入れると、税込の目安（10%・端数は切り捨て）も一緒に表示します。' }));
+      form.appendChild(tax);
+
+      // 基本メニュー
+      var bwrap = h('fieldset', null, [h('legend', { text: '基本メニュー（お客さんが1つ選びます・1〜6件）' })]);
+      var brows = h('div');
+      function drawBases() {
+        brows.textContent = '';
+        draft.bases.forEach(function (b, i) {
+          var card = h('div', { class: 'row-card' }, [h('div', { class: 'rc-title', text: '基本メニュー' + (i + 1) })]);
+          card.appendChild(textField(b, 'name', '名前', PG.LIM.bname, '（20字まで）'));
+          card.appendChild(textField(b, 'desc', '説明', PG.LIM.bdesc, '（任意・30字まで）'));
+          card.appendChild(textField(b, 'price', '金額（円）', 12, '', { inputmode: 'numeric', ph: '例 28000' }));
+          card.appendChild(checkField(b, 'from', '「〜から」にする（金額は最低額）'));
+          if (draft.bases.length > 1) card.appendChild(h('button', { type: 'button', class: 'danger', text: 'このメニューを消す', onclick: function () { draft.bases.splice(i, 1); pvSel = null; drawBases(); changed(); } }));
+          brows.appendChild(card);
+        });
+        addB.disabled = draft.bases.length >= PG.MAXB;
+      }
+      var addB = h('button', { type: 'button', text: '基本メニューを足す', onclick: function () { draft.bases.push(PG.blankBase()); pvSel = null; drawBases(); changed(); } });
+      bwrap.appendChild(brows); bwrap.appendChild(addB); form.appendChild(bwrap); drawBases();
+
+      // オプション
+      var owrap = h('fieldset', null, [h('legend', { text: 'オプション（0〜8件）' })]);
+      var orows = h('div');
+      function drawOpts() {
+        orows.textContent = '';
+        draft.opts.forEach(function (o, i) {
+          var card = h('div', { class: 'row-card' }, [h('div', { class: 'rc-title', text: 'オプション' + (i + 1) })]);
+          card.appendChild(textField(o, 'name', '名前', PG.LIM.oname, '（20字まで）'));
+          card.appendChild(textField(o, 'price', '金額（円）', 12, '', { inputmode: 'numeric', ph: '例 3000' }));
+          card.appendChild(textField(o, 'unit', '単位', PG.LIM.ounit, '（任意・6字まで。例 10枚）'));
+          card.appendChild(checkField(o, 'qty', '数を選べるようにする（0〜20）'));
+          card.appendChild(h('button', { type: 'button', class: 'danger', text: 'このオプションを消す', onclick: function () { draft.opts.splice(i, 1); pvSel = null; drawOpts(); changed(); } }));
+          orows.appendChild(card);
+        });
+        addO.disabled = draft.opts.length >= PG.MAXO;
+      }
+      var addO = h('button', { type: 'button', text: 'オプションを足す', onclick: function () { draft.opts.push(PG.blankOpt()); pvSel = null; drawOpts(); changed(); } });
+      owrap.appendChild(orows); owrap.appendChild(addO); form.appendChild(owrap); drawOpts();
+
+      // 急ぎ
+      var rwrap = h('fieldset', null, [h('legend', { text: '急ぎの割増（任意）' })]);
+      var rbody = h('div');
+      function drawRush() {
+        rbody.textContent = '';
+        if (draft.rushOn) {
+          rbody.appendChild(textField(draft, 'rushLabel', '名前', PG.LIM.rlabel, '（12字まで。例 1週間以内の納品）'));
+          rbody.appendChild(textField(draft, 'rushPct', '割合（%）', 4, '（1〜100）', { inputmode: 'numeric' }));
+        }
+      }
+      rwrap.appendChild(checkField(draft, 'rushOn', '急ぎの割増を付ける', drawRush));
+      rwrap.appendChild(rbody); form.appendChild(rwrap); drawRush();
+
+      form.appendChild(textField(draft, 'note', '補足', PG.LIM.note, '（任意・80字まで）'));
+      form.appendChild(textField(draft, 'contact', '連絡方法の案内', PG.LIM.contact, '（任意・60字まで。文字として表示するだけで、リンクにはなりません）'));
+      form.appendChild(h('p', { class: 'small', text: 'リンク（http や www で始まる文字）は入れられません。' }));
+    }
+    buildForm();
+
+    // リンク作成
+    var lenEl = h('p', { class: 'len' }), urlTa = h('textarea', { readonly: true, rows: 4, class: 'urlbox', 'aria-label': '共有用URL' });
+    var cpBtn = h('button', { type: 'button', class: 'primary', text: 'URLをコピー' });
+    var shBtn = h('button', { type: 'button', text: '共有' });
+    var cpMsg = h('p', { class: 'okmsg', role: 'status' });
+    shBtn.hidden = !PG.canShareUrl(navigator);
+    var curUrl = '';
+    cpBtn.addEventListener('click', function () {
+      copyText(curUrl, function (ok) {
+        if (ok) cpMsg.textContent = 'コピーしました。メモなどに控えてから、お客さんに送ってください。';
+        else { cpMsg.textContent = 'コピーできませんでした。上のURLを長押しして、コピーしてください。'; urlTa.focus(); urlTa.select(); urlTa.setSelectionRange(0, curUrl.length); }
+      });
+    });
+    shBtn.addEventListener('click', function () {
+      var p; try { p = navigator.share({ url: curUrl }); } catch (e) { return; }
+      if (p && p.catch) p.catch(function (e) { if (!e || e.name !== 'AbortError') cpMsg.textContent = '共有できませんでした。URLをコピーしてください。'; });
+    });
+    resultBox.appendChild(h('h3', { text: '共有用のリンク' }));
+    resultBox.appendChild(lenEl); resultBox.appendChild(urlTa);
+    resultBox.appendChild(h('div', { class: 'btns' }, [cpBtn, shBtn]));
+    resultBox.appendChild(cpMsg);
+    resultBox.appendChild(h('p', { class: 'small', text: '作ったリンクは、あなたのブラウザには保存されません。URLをコピーして、メモなどに控えてください。' }));
+
+    var make = h('button', { type: 'button', class: 'primary', text: 'リンクを作る' });
+    make.addEventListener('click', function () {
+      showErrors = true;
+      var r = refreshErrors();
+      if (!r.cfg) { resultBox.hidden = true; errBox.scrollIntoView && errBox.scrollIntoView({ block: 'nearest' }); return; }
+      curUrl = PG.makeUrl(baseUrl(), r.cfg);
+      var n = PG.cpLen(curUrl), over = n > PG.URL_MAX;
+      lenEl.textContent = 'URLの長さ: ' + PG.yen(n) + ' / ' + PG.yen(PG.URL_MAX) + '文字' + (over ? '（長すぎます。項目を減らしてください）' : '');
+      lenEl.className = 'len' + (over ? ' over' : '');
+      urlTa.value = over ? '' : curUrl;
+      cpBtn.disabled = over; shBtn.disabled = over; cpMsg.textContent = '';
+      resultBox.hidden = false;
+      if (resultBox.scrollIntoView) resultBox.scrollIntoView({ block: 'nearest' });
+    });
+    left.appendChild(h('div', { class: 'btns' }, [make]));
+    left.appendChild(errBox);
+
+    right.appendChild(resultBox);
+    right.appendChild(h('h2', { text: 'お客さんにはこう見えます（プレビュー）' }));
+    right.appendChild(pvRoot);
+    renderPreview();
+  }
+
+  /* ---------------- 見る画面（リンクを開いたとき） ---------------- */
+  function renderViewPage(cfg) {
+    document.title = (cfg.name ? cfg.name + '｜' : '') + '料金の目安';
+    app.textContent = '';
+    var page = h('div', { class: 'viewpage' }); app.appendChild(page);
+    var root = h('div'); page.appendChild(root);
+    renderView(root, cfg, PG.newSel(cfg), false);
+    page.appendChild(h('button', { type: 'button', class: 'linklike', text: '自分用の料金の目安リンクを作る', onclick: goMake }));
+  }
+  function renderBroken() {
+    document.title = '料金の目安リンクメーカー';
+    app.textContent = '';
+    app.appendChild(h('h1', { text: 'リンクを開けませんでした' }));
+    app.appendChild(h('div', { class: 'errors', text: 'リンクが壊れているか、対応していない形式です。リンクを送ってくれた方に、もう一度確認してください。' }));
+    app.appendChild(h('button', { type: 'button', text: '料金の目安リンクを作る画面へ', onclick: goMake }));
+  }
+  function goMake() {
+    try { history.pushState(null, '', baseUrl()); } catch (e) { location.hash = ''; }
+    route();
+  }
+  function route() {
+    var hash = location.hash;
+    if (!hash || hash === '#') { renderMake(); return; }
+    var cfg = PG.decodeHash(hash);
+    if (cfg) renderViewPage(cfg); else renderBroken();
+    window.scrollTo(0, 0);
+  }
+  window.addEventListener('hashchange', route);
+  route();
+})();
+</script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js"
+        data-cf-beacon='{"token": "b4c9f7e78daf4edb84ef52b88633f649"}'></script>
+</body>
+</html>
